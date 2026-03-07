@@ -1,7 +1,7 @@
 # ZeroClaw Configuration for claw.chancejiang.com
 # Deploy to ~/.zeroclaw/config.toml on remote server
 
-# LLM Provider Configuration - GLM-4-flash via Zhipu AI
+# LLM Provider Configuration - GLM-5 via Zhipu AI
 default_temperature = 0.7
 
 # GLM Provider (OpenAI-compatible API)
@@ -13,7 +13,7 @@ api_key = "259cff168b9c4d3ebfe3735c5a4fe1dc.gKrV4HRU0d149Xkp"
 [llm]
 provider = "openai"
 base_url = "https://open.bigmodel.cn/api/coding/paas/v4"
-model = "glm-4-flash"
+model = "GLM-5"
 api_key = "259cff168b9c4d3ebfe3735c5a4fe1dc.gKrV4HRU0d149Xkp"
 
 # Telegram Bot Configuration

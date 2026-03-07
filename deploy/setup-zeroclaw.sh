@@ -36,7 +36,7 @@ cat > "$CONFIG_DIR/config.toml" << 'EOF'
 [llm]
 provider = "openai"
 base_url = "https://open.bigmodel.cn/api/coding/paas/v4"
-model = "glm-4-flash"
+model = "glm-5"
 api_key = "259cff168b9c4d3ebfe3735c5a4fe1dc.gKrV4HRU0d149Xkp"
 
 [telegram]
