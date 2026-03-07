@@ -1,0 +1,12 @@
+# Secrets - never commit private keys
+secrets/*
+!secrets/*.pub
+!.gitkeep
+
+# macOS
+.DS_Store
+
+# Editor
+.vscode/
+*.swp
+*.swo
