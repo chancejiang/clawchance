@@ -12,7 +12,8 @@ This repository contains the infrastructure-as-code for deploying and managing Z
 |-----------|-------------|
 | `deploy/` | Shell scripts and Makefile for ZeroClaw deployment |
 | `secrets/` | SSH public keys (private keys excluded via .gitignore) |
-| `skills/` | Hardware documentation for target deployment platforms |
+| `skills/` | Hardware documentation and community skills for ZeroClaw |
+| `skills/open-skills/` | Forked community skills repository (security-audited) |
 | `.clinerules/` | Project specifications and feature comparison docs |
 
 ### Features
@@ -73,10 +74,48 @@ make -C deploy setup
 
 See `.clinerules/SPECS.md` for full deploy key setup instructions.
 
+## Open-Skills Mandate
+
+For security auditing purposes, all ZeroClaw deployments must use the forked community skills repository from this project, **NOT** the upstream/official one.
+
+### Repository
+
+- **Fork**: `git@github.com:chancejiang/open-skills.git`
+- **Local Copy**: `skills/open-skills/` in this repository
+- **Remote Path**: `~/open-skills` on zeroclaw node
+
+### Why This Matters
+
+1. **Security Auditing**: All skills are reviewed before being used in production
+2. **Version Control**: Changes to skills are tracked and auditable
+3. **Stability**: Forked version ensures consistent behavior across deployments
+
+### Provisioning on ZeroClaw Node
+
+```bash
+# On zeroclaw node - clone the forked repo (NOT upstream)
+ssh ubuntu@zeroclaw.ruffe-court.ts.net
+
+# Remove any existing upstream clone
+rm -rf ~/open-skills
+
+# Clone from this project's fork
+git clone git@github.com:chancejiang/open-skills.git ~/open-skills
+```
+
+### Updating Skills
+
+When updating skills, always:
+1. Pull changes to this repository's `skills/open-skills/` first
+2. Review and audit the changes
+3. Push to the `chancejiang/open-skills` fork
+4. Then pull on the zeroclaw node
+
 ## Related Projects
 
 - [ZeroClaw](https://github.com/chancejiang/zeroclaw) - Main AI agent repository
 - [PicoClaw](https://github.com/yu819471/claw-pico) - Ultra-lightweight Go variant
+- [Open-Skills Fork](https://github.com/chancejiang/open-skills) - Community skills (audited)
 
 ## License
 
