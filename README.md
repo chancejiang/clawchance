@@ -71,6 +71,7 @@ make -C deploy setup
 |-----|------------|---------|
 | `clawchance` | `chancejiang/clawchance` | This project |
 | `github-deploy` | `chancejiang/zeroclaw` | ZeroClaw upstream |
+| `chanceskills` | `chancejiang/open-skills` | Community skills fork |
 
 See `.clinerules/SPECS.md` for full deploy key setup instructions.
 
