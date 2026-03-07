@@ -1,0 +1,77 @@
+# ZeroClaw Configuration for claw.chancejiang.com
+# Deploy to ~/.zeroclaw/config.toml on remote server
+
+# LLM Provider Configuration - GLM-4-flash via Zhipu AI
+default_temperature = 0.7
+
+# GLM Provider (OpenAI-compatible API)
+[model_providers.openai]
+base_url = "https://open.bigmodel.cn/api/coding/paas/v4"
+api_key = "259cff168b9c4d3ebfe3735c5a4fe1dc.gKrV4HRU0d149Xkp"
+
+# Alternative LLM section for compatibility
+[llm]
+provider = "openai"
+base_url = "https://open.bigmodel.cn/api/coding/paas/v4"
+model = "glm-4-flash"
+api_key = "259cff168b9c4d3ebfe3735c5a4fe1dc.gKrV4HRU0d149Xkp"
+
+# Telegram Bot Configuration
+[telegram]
+enabled = true
+bot_token = "8156887004:AAHLQYaeNioR8KklRBiNDLGrgGoUE6Yzw-A"
+allowed_users = []  # Add your Telegram user ID after first interaction
+
+# Gateway Configuration
+[gateway]
+port = 42617
+bind = "127.0.0.1"
+host = "127.0.0.1"
+require_pairing = true
+allow_public_bind = false
+
+# Autonomy Settings
+[autonomy]
+level = "supervised"
+workspace_only = true
+allowed_commands = [
+    "git",
+    "npm",
+    "yarn",
+    "cargo",
+    "trunk",
+    "python3",
+    "ls",
+    "cat",
+    "grep",
+    "find",
+    "echo",
+    "pwd",
+]
+forbidden_paths = [
+    "/etc",
+    "/root",
+    "/home",
+    "~/.ssh",
+    "~/.gnupg",
+]
+
+# Agent Configuration
+[agent]
+autonomy = "supervised"
+workspace = "/home/ubuntu/workspace"
+
+# Tools Configuration
+[tools]
+allowed_commands = ["git", "npm", "yarn", "cargo", "trunk", "python3"]
+forbidden_paths = ["/etc", "/root", "/home", "~/.ssh", "~/.gnupg"]
+
+# Memory Configuration
+[memory]
+backend = "sqlite"
+path = "/home/ubuntu/.zeroclaw/memory.db"
+auto_save = true
+
+# Tunnel Configuration
+[tunnel]
+provider = "none"
