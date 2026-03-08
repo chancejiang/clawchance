@@ -1,4 +1,6 @@
-# claw.chancejiang.com
+# The ClawPapa of Everything by Chance
+
+Clawpapa is Chance's ZeroClaw of everything hosted at [claw.chancejiang.com](https://claw.chancejiang.com), admin by node `zeroclaw.ruffe-court.ts.net`.
 
 Deployment configuration and automation scripts for ZeroClaw - an AI-powered agent system with Telegram bot integration.
 
