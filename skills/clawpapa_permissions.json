@@ -1,0 +1,14 @@
+{
+  "scopes": {
+    "tenant": ["im:message:send_as_bot", "im:message:receive_as_thread", "im:chat:create", "app:invoke:other"],
+    "user": [
+      "im:message",
+      "im:chat",
+      "contact:user.base:readonly",
+      "contact:user:readonly",
+      "contact:department:readonly",
+      "search:user:readonly",
+      "app:app:readonly"
+    ]
+  }
+}
