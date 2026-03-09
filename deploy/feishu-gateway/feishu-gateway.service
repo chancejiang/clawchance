@@ -1,0 +1,40 @@
+[Unit]
+Description=Feishu Gateway - ZeroClaw AI Bot Integration
+Documentation=https://github.com/chancejiang/zeroclaw
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=ubuntu
+Group=ubuntu
+WorkingDirectory=/home/ubuntu/feishu-gateway
+ExecStart=/home/ubuntu/feishu-gateway/feishu-gateway
+
+# Load environment variables from .env file
+EnvironmentFile=/home/ubuntu/feishu-gateway/.env
+
+# Restart policy - always restart on failure
+Restart=on-failure
+RestartSec=5s
+
+# Note: WebSocket client doesn't support graceful shutdown, so use short timeout
+# Service will be killed with SIGKILL but restarts cleanly
+TimeoutStopSec=5s
+KillMode=mixed
+KillSignal=SIGTERM
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=feishu-gateway
+
+# Security hardening
+NoNewPrivileges=true
+PrivateTmp=true
+
+# Resource limits
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target

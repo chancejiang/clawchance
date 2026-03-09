@@ -1,0 +1,6 @@
+[submodule "skills/oapi-sdk-go"]
+	path = skills/oapi-sdk-go
+	url = https://github.com/larksuite/oapi-sdk-go.git
+[submodule "skills/open-skills"]
+	path = skills/open-skills
+	url = git@github.com:chancejiang/open-skills.git
