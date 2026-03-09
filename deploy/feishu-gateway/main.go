@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/signal"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 	"unicode/utf8"
@@ -46,11 +47,13 @@ type ZeroClawResponse struct {
 
 // FeishuGateway handles Feishu integration
 type FeishuGateway struct {
-	config      *Config
-	wsClient    *larkws.Client
-	apiClient   *lark.Client
-	zeroclawURL string
-	httpClient  *http.Client
+	config       *Config
+	wsClient     *larkws.Client
+	apiClient    *lark.Client
+	zeroclawURL  string
+	httpClient   *http.Client
+	messageCache map[string]time.Time // Track processed message IDs
+	cacheMutex   sync.RWMutex         // Protect concurrent access to cache
 }
 
 // LoadConfig loads configuration from environment variables
@@ -81,8 +84,9 @@ func getEnv(key, defaultValue string) string {
 // NewFeishuGateway creates a new FeishuGateway instance
 func NewFeishuGateway(config *Config) *FeishuGateway {
 	gateway := &FeishuGateway{
-		config:      config,
-		zeroclawURL: config.ZeroClawWebhook,
+		config:       config,
+		zeroclawURL:  config.ZeroClawWebhook,
+		messageCache: make(map[string]time.Time),
 		httpClient: &http.Client{
 			Timeout: 120 * time.Second, // 2 minutes for long AI responses
 		},
@@ -93,7 +97,43 @@ func NewFeishuGateway(config *Config) *FeishuGateway {
 		lark.WithLogLevel(config.LogLevel),
 	)
 
+	// Start cache cleanup goroutine
+	go gateway.cleanupCache()
+
 	return gateway
+}
+
+// cleanupCache periodically removes old entries from the message cache
+func (g *FeishuGateway) cleanupCache() {
+	ticker := time.NewTicker(5 * time.Minute)
+	defer ticker.Stop()
+
+	for range ticker.C {
+		g.cacheMutex.Lock()
+		now := time.Now()
+		for msgID, timestamp := range g.messageCache {
+			// Remove entries older than 10 minutes
+			if now.Sub(timestamp) > 10*time.Minute {
+				delete(g.messageCache, msgID)
+			}
+		}
+		g.cacheMutex.Unlock()
+	}
+}
+
+// isMessageProcessed checks if a message has already been processed
+func (g *FeishuGateway) isMessageProcessed(messageID string) bool {
+	g.cacheMutex.RLock()
+	defer g.cacheMutex.RUnlock()
+	_, exists := g.messageCache[messageID]
+	return exists
+}
+
+// markMessageProcessed marks a message as processed
+func (g *FeishuGateway) markMessageProcessed(messageID string) {
+	g.cacheMutex.Lock()
+	defer g.cacheMutex.Unlock()
+	g.messageCache[messageID] = time.Now()
 }
 
 // handleMessage handles incoming Feishu messages
@@ -114,6 +154,12 @@ func (g *FeishuGateway) handleMessage(ctx context.Context, event *larkim.P2Messa
 	msgType := *event.Event.Message.MessageType
 	content := *event.Event.Message.Content
 
+	// Check if message has already been processed (deduplication)
+	if g.isMessageProcessed(messageID) {
+		log.Printf("⏭️  Skipping duplicate message: %s", messageID)
+		return nil
+	}
+
 	// Get sender ID (prefer OpenId as it's always present, UserId can be nil)
 	var senderID string = "unknown"
 	if event.Event.Sender != nil && event.Event.Sender.SenderId != nil {
@@ -127,6 +173,9 @@ func (g *FeishuGateway) handleMessage(ctx context.Context, event *larkim.P2Messa
 	}
 
 	log.Printf("📩 [Message] Chat: %s, Sender: %s, Type: %s", chatID, senderID, msgType)
+
+	// Mark message as processed immediately to prevent duplicates
+	g.markMessageProcessed(messageID)
 
 	// Only handle text messages
 	if msgType != "text" {

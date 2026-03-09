@@ -33,21 +33,21 @@ remote_run() {
 # Phase 1: Install Prerequisites
 phase_prereq() {
     log_info "Phase 1: Installing prerequisites..."
-    
+
     remote_run "
         # Update system
         sudo apt update
-        
+
         # Install build dependencies
         sudo apt install -y build-essential pkg-config libssl-dev git curl
-        
+
         # Install Rust if not present
         if ! command -v rustc &> /dev/null; then
             echo 'Installing Rust toolchain...'
             curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
             source \$HOME/.cargo/env
         fi
-        
+
         # Verify installations
         echo '=== Installed versions ==='
         rustc --version || echo 'Rust not found'
@@ -56,18 +56,18 @@ phase_prereq() {
         gcc --version | head -1 || echo 'GCC not found'
         pkg-config --version || echo 'pkg-config not found'
     "
-    
+
     log_info "Prerequisites installed successfully!"
 }
 
 # Phase 2: Clone Repository
 phase_clone() {
     log_info "Phase 2: Cloning ZeroClaw repository..."
-    
+
     remote_run "
         # Create directory if not exists
         mkdir -p \$HOME/workspace
-        
+
         # Clone or update repository
         if [ -d \"$REMOTE_DIR\" ]; then
             echo 'Repository exists, pulling latest changes...'
@@ -76,50 +76,50 @@ phase_clone() {
             echo 'Cloning repository...'
             git clone \"$REPO_URL\" \"$REMOTE_DIR\"
         fi
-        
+
         # Verify clone
         ls -la \"$REMOTE_DIR\"
     "
-    
+
     log_info "Repository cloned successfully!"
 }
 
 # Phase 3: Build Release Binary
 phase_build() {
     log_info "Phase 3: Building ZeroClaw release binary..."
-    
+
     remote_run "
         source \$HOME/.cargo/env 2>/dev/null || true
         cd \"$REMOTE_DIR\"
-        
+
         # Build release
         echo 'Building release binary (this may take a few minutes)...'
         cargo build --release
-        
+
         # Verify build
         ls -lh target/release/zeroclaw 2>/dev/null || echo 'Binary not found!'
         ./target/release/zeroclaw --version 2>/dev/null || echo 'Could not get version'
     "
-    
+
     log_info "Build completed successfully!"
 }
 
 # Phase 4: Initial Configuration
 phase_config() {
     log_info "Phase 4: Setting up configuration..."
-    
+
     remote_run "
         cd \"$REMOTE_DIR\"
-        
+
         # Create config directory
         mkdir -p \$HOME/.zeroclaw
-        
+
         # Run onboarding if binary exists
         if [ -f \"./target/release/zeroclaw\" ]; then
             echo 'Running ZeroClaw onboarding...'
             ./target/release/zeroclaw onboard --help 2>/dev/null || echo 'Onboarding requires interactive mode'
         fi
-        
+
         # Create initial config.toml if not exists
         if [ ! -f \"\$HOME/.zeroclaw/config.toml\" ]; then
             echo 'Creating initial config.toml...'
@@ -129,7 +129,7 @@ phase_config() {
 
 [agent]
 autonomy = "supervised"  # readonly | supervised | full
-workspace = "/home/ubuntu/workspace"
+workspace = "/home/ubuntu/.zeroclaw/workspace"
 
 [tools]
 enabled = ["shell", "file", "memory", "cron", "git", "http_request"]
@@ -145,29 +145,29 @@ host = "127.0.0.1"
 port = 42617
 
 [projects.vuepress]
-repo_path = "/home/ubuntu/workspace/vuepress-site"
+repo_path = "/home/ubuntu/.zeroclaw/workspace/vuepress-site"
 git_remote = "origin"
 branch = "main"
 build_command = "npm run docs:build"
 deploy_trigger = "git push origin main"
 
 [projects.general]
-workspace_root = "/home/ubuntu/workspace"
+workspace_root = "/home/ubuntu/.zeroclaw/workspace"
 notify_channel = "telegram"
 CONFIGEOF
             echo 'Config file created at ~/.zeroclaw/config.toml'
         fi
-        
+
         ls -la \$HOME/.zeroclaw/
     "
-    
+
     log_info "Configuration setup completed!"
 }
 
 # Phase 5: Install Systemd Service
 phase_service() {
     log_info "Phase 5: Installing systemd service..."
-    
+
     remote_run "
         # Create systemd service file
         sudo tee /etc/systemd/system/zeroclaw.service > /dev/null << 'SERVICEEOF'
@@ -198,41 +198,41 @@ PrivateTmp=true
 [Install]
 WantedBy=multi-user.target
 SERVICEEOF
-        
+
         # Reload systemd
         sudo systemctl daemon-reload
-        
+
         # Enable service (don't start yet)
         sudo systemctl enable zeroclaw
-        
+
         echo 'Service installed. Start with: sudo systemctl start zeroclaw'
         echo 'Check status with: sudo systemctl status zeroclaw'
     "
-    
+
     log_info "Service installed successfully!"
 }
 
 # Phase 6: Verify Deployment
 phase_verify() {
     log_info "Phase 6: Verifying deployment..."
-    
+
     remote_run "
         echo '=== System Status ==='
         sudo systemctl status zeroclaw --no-pager || echo 'Service not running yet'
-        
+
         echo ''
         echo '=== Gateway Check ==='
         curl -s http://127.0.0.1:42617/health 2>/dev/null || echo 'Gateway not responding (start service first)'
-        
+
         echo ''
         echo '=== Disk Usage ==='
         df -h /home
-        
+
         echo ''
         echo '=== Memory ==='
         free -h
     "
-    
+
     log_info "Verification completed!"
 }
 

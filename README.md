@@ -13,6 +13,8 @@ This repository contains the infrastructure-as-code for deploying and managing Z
 | Directory | Description |
 |-----------|-------------|
 | `deploy/` | Shell scripts and Makefile for ZeroClaw deployment |
+| `workspace/` | Master copy/backup of ZeroClaw app workspace (syncs to `~/.zeroclaw/workspace/`) |
+| `workspace/skills/` | ZeroClaw skills (e.g., `feishu_bot/`) |
 | `secrets/` | SSH public keys (private keys excluded via .gitignore) |
 | `skills/` | Hardware documentation and community skills for ZeroClaw |
 | `skills/open-skills/` | Forked community skills repository (security-audited) |
@@ -21,7 +23,8 @@ This repository contains the infrastructure-as-code for deploying and managing Z
 ### Features
 
 - **ZeroClaw Agent**: Rust-based AI agent with multi-LLM support
-- **Telegram Bot**: `@clawyeyebot` for chat-based control
+- **Telegram Bot**: `@clawpapa` for chat-based control
+- **Feishu Bot**: WebSocket Long-Connection SDK for real-time messaging
 - **Cloudflare Tunnel**: Secure external access via `claw.chancejiang.com`
 - **Yew Dashboard**: Planned web UI for monitoring and control
 
@@ -51,6 +54,47 @@ cd clawchance
 make -C deploy setup
 ```
 
+## Directory Structure & Sync
+
+### Remote Server Structure (`ubuntu@zeroclaw.ruffe-court.ts.net`)
+
+```
+/home/ubuntu/
+├── zeroclaw/                    # ZeroClaw repository (git clone)
+│   └── target/release/zeroclaw  # Binary
+│
+├── workspace/                   # Admin tools ONLY (NOT for ZeroClaw app)
+│
+└── .zeroclaw/                   # ZeroClaw App Data
+    ├── config.toml              # Configuration
+    ├── memory.db                # Memory database
+    └── workspace/               # ZeroClaw app workspace
+        ├── skills/              # Skills (e.g., feishu_bot)
+        ├── vuepress-site/       # Projects
+        └── ...
+```
+
+### Local Workspace Sync
+
+The local `workspace/` directory serves as the **master copy/backup** of the ZeroClaw app's workspace:
+
+```
+Local workspace/  ←→  Remote ~/.zeroclaw/workspace/
+```
+
+**Sync Command:**
+```bash
+rsync -avz workspace/ ubuntu@zeroclaw.ruffe-court.ts.net:/home/ubuntu/.zeroclaw/workspace/
+```
+
+### Important Distinction
+
+| Path | Purpose |
+|------|---------|
+| `/home/ubuntu/workspace` | Admin tools only (NOT ZeroClaw) |
+| `/home/ubuntu/.zeroclaw/workspace` | ZeroClaw app workspace (skills, projects) |
+| Local `workspace/` | Master copy synced to `~/.zeroclaw/workspace/` |
+
 ## Architecture
 
 ```
@@ -60,12 +104,26 @@ make -C deploy setup
 └─────────────────┘     │   Port: 42617    │     └─────────────────┘
                         └────────┬─────────┘
                                  │
-                        ┌────────▼─────────┐
-                        │ Cloudflare Tunnel│
-                        │ claw.chancejiang │
-                        │      .com        │
+┌─────────────────┐     ┌────────▼─────────┐
+│   Feishu Bot    │────▶│ Cloudflare Tunnel│
+│  (WebSocket)    │     │ claw.chancejiang │
+└─────────────────┘     │      .com        │
                         └──────────────────┘
 ```
+
+### Feishu Bot Integration
+
+ZeroClaw integrates with Feishu (Lark) via **WebSocket Long-Connection SDK** for real-time messaging:
+
+| Component | Protocol | Purpose |
+|-----------|----------|---------|
+| Event Receiving | WebSocket (`wss://`) | Real-time message events (millisecond latency) |
+| Message Sending | REST API | Send replies and messages |
+| Document Operations | MCP Service | AI agent document workflows |
+
+**Key Advantage:** WebSocket allows local development without port forwarding or ngrok - just outbound connection to Feishu servers.
+
+See `workspace/skills/feishu_bot/SKILL.md` for full integration documentation.
 
 ## Deploy Keys
 
