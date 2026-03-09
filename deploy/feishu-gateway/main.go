@@ -9,8 +9,10 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
+	"unicode/utf8"
 
 	"github.com/joho/godotenv"
 	lark "github.com/larksuite/oapi-sdk-go/v3"
@@ -206,12 +208,66 @@ func (g *FeishuGateway) callZeroClaw(ctx context.Context, message, userID, chatI
 	return result.Response, nil
 }
 
+// sanitizeContent sanitizes text content for Feishu API
+// Removes or replaces characters that may cause API errors
+func sanitizeContent(text string) string {
+	// Remove null bytes and other control characters except newlines and tabs
+	var result strings.Builder
+	for _, r := range text {
+		if r == 0x00 || (r < 0x20 && r != 0x09 && r != 0x0A && r != 0x0D) {
+			// Skip null bytes and control characters except tab, newline, carriage return
+			continue
+		}
+		result.WriteRune(r)
+	}
+	sanitized := result.String()
+
+	// Trim leading/trailing whitespace
+	sanitized = strings.TrimSpace(sanitized)
+
+	// Feishu text message limit is 30KB (about 10000 Chinese characters or 30000 ASCII)
+	// We'll limit to 28000 bytes to be safe
+	const maxBytes = 28000
+	if utf8.RuneCountInString(sanitized) > maxBytes/3 { // Rough estimate
+		byteLen := len([]byte(sanitized))
+		if byteLen > maxBytes {
+			// Truncate to maxBytes, respecting UTF-8 boundaries
+			bytes := []byte(sanitized)
+			for len(bytes) > maxBytes {
+				// Remove last rune
+				_, size := utf8.DecodeLastRune(bytes)
+				bytes = bytes[:len(bytes)-size]
+			}
+			sanitized = string(bytes) + "\n... (message truncated)"
+		}
+	}
+
+	return sanitized
+}
+
 // replyMessage sends a reply to a Feishu message
 func (g *FeishuGateway) replyMessage(ctx context.Context, messageID, text string) error {
-	// Build text content
-	content := larkim.NewTextMsgBuilder().
-		Text(text).
-		Build()
+	// Sanitize content to prevent API errors
+	sanitizedText := sanitizeContent(text)
+
+	// Log if text was modified
+	if sanitizedText != text {
+		log.Printf("⚠️  Content was sanitized (original: %d bytes, sanitized: %d bytes)",
+			len(text), len(sanitizedText))
+	}
+
+	// Debug log the content being sent
+	log.Printf("📤 Sending reply content (first 200 chars): %s", truncate(sanitizedText, 200))
+
+	// Build text content using raw JSON to ensure proper escaping
+	contentBytes, err := json.Marshal(map[string]string{"text": sanitizedText})
+	if err != nil {
+		return fmt.Errorf("failed to marshal content: %w", err)
+	}
+	content := string(contentBytes)
+
+	// Debug log the JSON content
+	log.Printf("📤 JSON content length: %d bytes", len(content))
 
 	// Reply to message
 	resp, err := g.apiClient.Im.Message.Reply(ctx,
@@ -224,10 +280,16 @@ func (g *FeishuGateway) replyMessage(ctx context.Context, messageID, text string
 			Build())
 
 	if err != nil {
+		log.Printf("❌ Reply API error: %v", err)
 		return fmt.Errorf("failed to send reply: %w", err)
 	}
 
 	if !resp.Success() {
+		log.Printf("❌ Reply failed: code=%d, msg=%s", resp.Code, resp.Msg)
+		// Log more details for debugging
+		if resp.Data != nil {
+			log.Printf("❌ Response data: %+v", resp.Data)
+		}
 		return fmt.Errorf("reply failed: code=%d, msg=%s", resp.Code, resp.Msg)
 	}
 

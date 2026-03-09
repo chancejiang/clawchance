@@ -6,10 +6,14 @@
 REMOTE_HOST := ubuntu@zeroclaw.ruffe-court.ts.net
 REMOTE_DIR := ~/zeroclaw
 
-.PHONY: all help ssh status logs start stop restart deploy prereq clone build config service
+.PHONY: all help ssh status logs start stop restart deploy prereq clone build config service \
+        fg-deploy fg-build fg-status fg-logs fg-start fg-stop fg-restart fg-check fg-help
 
 # Default target
 all: deploy
+
+# Feishu Gateway default
+fg: fg-deploy
 
 # Help
 help:
@@ -35,6 +39,16 @@ help:
 	@echo "  check     - Quick health check"
 	@echo "  update    - Pull latest and rebuild"
 	@echo "  estop     - Emergency stop"
+	@echo ""
+	@echo "Feishu Gateway:"
+	@echo "  fg-deploy  - Deploy feishu-gateway (build + deploy + start)"
+	@echo "  fg-build   - Build feishu-gateway binary only"
+	@echo "  fg-status  - Check feishu-gateway service status"
+	@echo "  fg-logs    - View feishu-gateway logs"
+	@echo "  fg-start   - Start feishu-gateway service"
+	@echo "  fg-stop    - Stop feishu-gateway service"
+	@echo "  fg-restart - Restart feishu-gateway service"
+	@echo "  fg-check   - Check feishu-gateway prerequisites"
 	@echo ""
 	@echo "Target: $(REMOTE_HOST)"
 
@@ -157,3 +171,47 @@ reset:
 		rm -rf $(REMOTE_DIR); \
 		rm -rf ~/.zeroclaw; \
 		echo 'ZeroClaw removed'"
+
+# ===========================================
+# Feishu Gateway Commands
+# ===========================================
+
+# Deploy feishu-gateway (build + deploy + start)
+fg-deploy:
+	@echo "🚀 Deploying Feishu Gateway..."
+	./deploy-feishu-gateway.sh deploy
+
+# Build feishu-gateway binary only
+fg-build:
+	@echo "🔨 Building Feishu Gateway binary..."
+	./deploy-feishu-gateway.sh build
+
+# Check feishu-gateway service status
+fg-status:
+	@echo "📊 Checking Feishu Gateway status..."
+	./deploy-feishu-gateway.sh status
+
+# View feishu-gateway logs
+fg-logs:
+	@echo "📜 Viewing Feishu Gateway logs (Ctrl+C to exit)..."
+	./deploy-feishu-gateway.sh logs
+
+# Start feishu-gateway service
+fg-start:
+	@echo "▶️  Starting Feishu Gateway..."
+	./deploy-feishu-gateway.sh start
+
+# Stop feishu-gateway service
+fg-stop:
+	@echo "⏹️  Stopping Feishu Gateway..."
+	./deploy-feishu-gateway.sh stop
+
+# Restart feishu-gateway service
+fg-restart:
+	@echo "🔄 Restarting Feishu Gateway..."
+	./deploy-feishu-gateway.sh restart
+
+# Check feishu-gateway prerequisites
+fg-check:
+	@echo "🔍 Checking Feishu Gateway prerequisites..."
+	./deploy-feishu-gateway.sh check
