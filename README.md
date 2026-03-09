@@ -56,7 +56,7 @@ make -C deploy setup
 ```
 ┌─────────────────┐     ┌──────────────────┐     ┌─────────────────┐
 │   Telegram Bot  │────▶│    ZeroClaw      │────▶│   LLM Provider  │
-│  @clawyeyebot   │     │   (Gateway)      │     │  (GLM/Ollama)   │
+│  @clawpapa       │     │   (Gateway)      │     │  (GLM/Ollama)   │
 └─────────────────┘     │   Port: 42617    │     └─────────────────┘
                         └────────┬─────────┘
                                  │
