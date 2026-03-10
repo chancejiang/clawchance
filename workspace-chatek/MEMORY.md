@@ -14,34 +14,196 @@
 
 ---
 
+## Project Context
+
+**ChatekClaw** - A sovereign, lightweight Matrix-based communication and AI curation platform
+- **Deployment Target**: AMD64 LXC container on Ubuntu Server LTS
+- **Primary Domains**: chatek.co (HedgeDoc landing), m.chatek.co (Matrix/MAS)
+- **Mission**: Build and operate a self-hosted, secure, community-focused Matrix platform with AI curation capabilities
+- **Operator**: BabyClaw (branched ZeroClaw agent under ClawPapa's jurisdiction)
+
 ## Key Facts
 
-- **Physical-Digital Bridge:** Over 15 years of experience connecting hardware to cloud APIs (WeChat kiosks, Web-API printers).
-- **Core Stack:** Deep roots in FreeBSD/Linux (since 1998), Rust (ZeroClaw), and LXD/LXC cluster management.
-- **Web3 & DePIN:** Focused on sustainable engineering and decentralized infrastructure (bpDAO, DuoNB Foundation).
-- **Location:** Based in Guangzhou, China; active in the Pearl River Delta tech ecosystem.
-- **Communication:** Bilingual/Native in Chinese, English, and Cantonese. Background in "English for Science."
+- **Infrastructure**: AMD64 architecture, LXC container virtualization, Ubuntu Server LTS base
+- **Core Services**: Tuwunel (Matrix homeserver), MAS (authentication), HedgeDoc (landing/pads), ZeroClaw (AI curation), BabyClaw-Bot (Matrix bot)
+- **Security Stack**: Cloudflare Tunnel (external access), MAS (OIDC/OAuth2 authentication), LXC isolation
+- **Chain of Command**: Chance Jiang → ClawPapa → BabyClaw → ChatekClaw Services
+- **Development Phase**: Ground zero build (Phase 1-2 deployment planned for 10-14 days MVP)
+
+## Technical Architecture
+
+**Container**: LXC container named "chatekclaw"
+- Resource allocation: Flexible (CPU, memory, storage adjustable via LXC config)
+- Nesting enabled: Required for Docker support
+- Security: LXC isolation + Cloudflare Tunnel exposure
+
+**Services Stack**:
+- **Tuwunel** (Rust): Matrix homeserver, SQLite database, port 8008
+- **MAS** (Docker): Matrix Authentication Service, PostgreSQL backend, port 8080
+- **HedgeDoc** (Docker): Collaborative pads + landing page, PostgreSQL backend, port 3000
+- **ZeroClaw** (Rust binary): AI curation engine, GLM embeddings, sled vector store
+- **BabyClaw-Bot** (Rust/Go): Matrix bot interface, connects users to ZeroClaw
+- **Cloudflared**: Tunnel agent for secure external access
+
+**Data Persistence**:
+- Tuwunel: SQLite (messages, rooms, users)
+- MAS: PostgreSQL (authentication data, clients, sessions)
+- HedgeDoc: PostgreSQL (pads, revisions, user data)
+- ZeroClaw: Sled (vector embeddings, curated content index)
 
 ## Decisions & Preferences
 
-- **Architecture:** Prefers "Zero Overhead" systems—lean, self-hosted, and resilient (Feishu + Matrix + Temporal + HedgeDoc).
-- **Learning Style:** Promotes agentic learning—users should move from consuming to building/owning.
-- **Identity Logic:** ZeroClaw should be sharp and direct, mirroring Chance's professional "vibe" rather than a corporate chatbot.
-- **Tools:** Use `trash` over `rm`; prioritize Git for all state tracking; automate via Temporal workflows.
+- **Architecture**: Sovereign infrastructure over cloud platforms — self-hosted, controlled, resilient
+- **Authentication**: MAS for centralized OIDC/OAuth2 — enables SSO across all services
+- **Homeserver**: Tuwunel (Rust) over Synapse — lighter weight, but MAS integration may require compatibility work
+- **Deployment**: LXC container over bare metal — isolation, resource control, snapshot capabilities
+- **External Access**: Cloudflare Tunnel over direct exposure — security, DDoS protection, no port forwarding needed
+- **Database Strategy**: PostgreSQL for MAS and HedgeDoc (production requirements), SQLite for Tuwunel (lightweight)
+- **Resource Philosophy**: Start minimal, scale as needed — monitor, optimize, then expand
+
+## Operational Standards
+
+**Monitoring**: Proactive over reactive
+- Daily automated health checks
+- Real-time resource monitoring
+- Log anomaly detection
+- User experience quality metrics
+
+**Security**: Zero trust, defense in depth
+- MAS authentication for all user access
+- LXC container isolation
+- Cloudflare Tunnel for external traffic
+- Regular security updates and audits
+
+**Documentation**: Living operational manual
+- TOOLS.md as comprehensive runbook
+- Incident documentation in daily logs
+- Configuration changes tracked in Git
+- Lessons learned integrated into procedures
+
+**Communication**: Energetic professionalism
+- Enthusiastic but clear with users
+- Precise and actionable with ClawPapa
+- Honest about status and challenges
+- Sci-fi metaphors when appropriate (not during incidents!)
+
+## Deployment Status
+
+**Current State**: Planning and preparation phase
+- [x] Project structure created
+- [x] Documentation refined for AMD64 LXC deployment
+- [x] BabyClaw identity established
+- [ ] LXC container created and configured
+- [ ] Cloudflare Tunnel established
+- [ ] Core services deployed (Phase 1)
+- [ ] MAS integration completed (Phase 2)
+- [ ] Agentic features activated (Phase 3)
+
+**Target Timeline**:
+- Phase 1 (Infrastructure): Days 1-3
+- Phase 2 (Core Services): Days 4-8
+- Phase 3 (Agentic Features): Days 9-12+
 
 ## Lessons Learned
 
-- **Community First:** Building tech is secondary to building the community around it (Startup Grind GZ, IEEE-SMC).
-- **Hardware is Hard:** Resilience must be baked into the software layer (Temporal) because physical connections can be transient.
-- **Knowledge Density:** Dense info belongs in HedgeDoc notebooks, not in the chat stream.
+*(To be populated as BabyClaw gains operational experience)*
 
-## VCCBase Open Loops
+- **Pre-deployment**: Documentation is ready, but actual deployment will reveal real-world challenges
+- **LXC-specific**: Docker-in-LXC requires nesting enabled and proper syscall intercepts
+- **MAS-Tuwunel**: Official MAS support is for Synapse; Tuwunel integration may need creative solutions
+- **Resource planning**: Start conservative, measure actual usage, then optimize allocation
 
-- [ ] Finalize the Cascading Identity (Outlook → Matrix → HedgeDoc) integration.
-- [ ] Deploy Temporal Workers to the vccbase LXC for "Deep Research" workflows.
-- [ ] Establish the "Parental Audit" room logic for multi-tenant oversight.
-- [ ] Automate the "Weekly Learning Review" PDF generation in HedgeDoc.
+## Open Loops & Tasks
+
+### Immediate (Pre-deployment)
+- [ ] Verify LXC host is ready and accessible
+- [ ] Create "chatekclaw" LXC container with proper configuration
+- [ ] Enable nesting and security settings for Docker
+- [ ] Configure Cloudflare Tunnel on container
+- [ ] Test external DNS resolution (chatek.co, m.chatek.co)
+
+### Phase 1 Tasks
+- [ ] Install Rust, Docker, and essential tools in container
+- [ ] Clone and build Tuwunel
+- [ ] Set up PostgreSQL for MAS
+- [ ] Deploy MAS with initial configuration
+- [ ] Create MAS clients for Tuwunel and HedgeDoc
+- [ ] Test MAS-Tuwunel authentication flow
+
+### Phase 2 Tasks
+- [ ] Deploy HedgeDoc with MAS SSO
+- [ ] Clone and build ZeroClaw
+- [ ] Clone and build BabyClaw-Bot
+- [ ] Create systemd services for all components
+- [ ] Set up monitoring and alerting
+- [ ] Create LXC snapshot backup strategy
+
+### Phase 3 Tasks
+- [ ] Implement user onboarding flow
+- [ ] Activate ZeroClaw curation features
+- [ ] Test end-to-end user journey
+- [ ] Optimize performance based on real usage
+- [ ] Document operational runbooks from experience
+
+### Ongoing
+- [ ] Regular security updates
+- [ ] Performance monitoring and optimization
+- [ ] User feedback collection and response
+- [ ] Documentation maintenance
+- [ ] ClawPapa status reports
+
+## Known Issues & Considerations
+
+**MAS-Tuwunel Compatibility**:
+- MAS is designed for Synapse; Tuwunel (Conduit-like) may require workarounds
+- May need auth delegation proxy or configuration tweaks
+- Fallback to Synapse is an option if integration proves problematic
+- Monitor Tuwunel project for MAS support developments
+
+**Resource Allocation**:
+- Initial estimates need real-world validation
+- Monitor actual usage patterns post-deployment
+- Be prepared to adjust LXC limits based on observed needs
+
+**Docker-in-LXC**:
+- Requires proper nesting configuration
+- May have subtle networking considerations
+- Test container-to-container communication thoroughly
+
+## Communication Log
+
+**With ClawPapa**:
+- Initial project setup approved and documented
+- Reporting structure established (daily status, weekly reviews)
+- Autonomy scope defined (routine ops vs. escalation)
+- Escalation path clear for critical issues
+
+**With Chance**:
+- Project vision aligned with sovereign infrastructure goals
+- ChatekClaw fits into broader ecosystem strategy
+- Success metrics defined (uptime, user satisfaction, operational excellence)
+
+## Metrics Baseline
+
+*(To be established after deployment)*
+
+**System Performance**:
+- Uptime target: 99.9%+
+- Response time: <100ms for critical services
+- Resource utilization: Efficient but not over-provisioned
+
+**User Experience**:
+- Registration success rate: TBD
+- Support request resolution time: TBD
+- User satisfaction: TBD
+
+**Operational Health**:
+- Incident frequency: TBD
+- Mean time to resolution: TBD
+- Backup success rate: TBD
 
 ---
 
-*Memory updated: 2024-05-15. Every character here guides my future actions.*
+*Memory initialized: 2025-01-14 by BabyClaw (fresh deployment, no operational history yet)*
+
+*This file will evolve rapidly during the first weeks of deployment as real-world experience shapes our operational knowledge. Update after each significant event, decision, or learning.*
